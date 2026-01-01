@@ -1,9 +1,6 @@
-import { config } from "dotenv";
-config();
-
-const { PORT, NODE_ENV } = process.env;
+import config from "config";
 
 export const Config = {
-    PORT: PORT,
-    NODE_ENV: NODE_ENV,
+    PORT: config.get<number>("server.port"),
+    HOST: config.get<string>("server.host"),
 };

@@ -3,13 +3,14 @@ import express, {
     type Request,
     type Response,
 } from "express";
+import config from "config";
 import logger from "./config/logger";
 import type { HttpError } from "http-errors";
 
 const app = express();
 
 app.get("/", (req: Request, res: Response) => {
-    res.status(200).send("Wellcome to auth service");
+    res.status(200).send(config.get("server.port"));
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
