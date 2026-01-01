@@ -3,7 +3,7 @@ import winston from "winston";
 const logger = winston.createLogger({
     level: "info",
     defaultMeta: {
-        seviceName: "auth-service",
+        seviceName: "catalog-service",
     },
     transports: [
         new winston.transports.File({

@@ -1,7 +1,7 @@
 {
-    "name": "auth-service",
+    "name": "catalog-service",
     "version": "1.0.0",
-    "description": "The user management service ",
+    "description": "The catalog service",
     "main": "index.js",
     "type": "module",
     "scripts": {
