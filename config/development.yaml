@@ -1,4 +1,6 @@
 server:
-  port: 5502
-  host: "localhost"
-  
+    port: 5502
+    host: "localhost"
+
+database:
+    url: "mongodb://root:root@localhost:27017/catalog-service?authSource=admin"
