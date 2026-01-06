@@ -1,8 +1,37 @@
 import { type Request, type Response, type NextFunction } from "express";
+import { validationResult } from "express-validator";
+import createHttpError from "http-errors";
+import type { Category } from "./category-types";
+import type { CategoryService } from "./category-service";
+import type { Logger } from "winston";
 
 export class CategoryController {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    create(req: Request, res: Response, next: NextFunction): void {
-        res.status(2001).json("create categories");
+    constructor(
+        private categoryService: CategoryService,
+        private logger: Logger
+    ) {}
+    async create(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        const result = validationResult(req);
+        if (!result.isEmpty()) {
+            return next(
+                createHttpError(400, "Validation Error", {
+                    errors: result.array(),
+                })
+            );
+        }
+        const { name, priceCofigration, attributes } = req.body as Category;
+        const category = await this.categoryService.create({
+            name,
+            priceCofigration,
+            attributes,
+        });
+        this.logger.info(
+            "Category created successfully " + category._id.toString()
+        );
+        res.status(201).json({ message: "create categories", category });
     }
 }

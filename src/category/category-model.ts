@@ -1,31 +1,12 @@
 import mongoose from "mongoose";
+import type { Attribute, Category, PriceConfiguration } from "./category-types";
 
-interface PriceConfiguration {
-    [key: string]: {
-        priceType: "base" | "additional";
-        availableOptions: string[];
-    };
-}
-
-interface Attribute {
-    name: string;
-    wigetType: "switch" | "radio";
-    defaultValue: string;
-    availableOptions: string[];
-}
-
-export interface Category {
-    name: string;
-    priceCofigration: PriceConfiguration;
-    attributes: Attribute[];
-}
-
-const priceCofigrationSchema = new mongoose.Schema({
+const priceCofigrationSchema = new mongoose.Schema<PriceConfiguration>({
     priceType: { type: String, enum: ["base", "additional"], required: true },
     availableOptions: { type: [String], required: true },
 });
 
-const attributeSchema = new mongoose.Schema({
+const attributeSchema = new mongoose.Schema<Attribute>({
     name: { type: String, required: true },
     wigetType: { type: String, enum: ["switch", "radio"], required: true },
     defaultValue: { type: mongoose.Schema.Types.Mixed, required: true },

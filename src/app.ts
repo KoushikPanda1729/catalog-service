@@ -6,12 +6,17 @@ import express, {
 import config from "config";
 import logger from "./config/logger";
 import type { HttpError } from "http-errors";
+import categoryRouter from "./category/category-route";
 
 const app = express();
+
+app.use(express.json());
 
 app.get("/", (req: Request, res: Response) => {
     res.status(200).send(config.get("server.port"));
 });
+
+app.use("/categories", categoryRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {

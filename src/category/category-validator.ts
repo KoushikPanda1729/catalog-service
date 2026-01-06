@@ -6,17 +6,17 @@ export default [
         .withMessage("category name is required")
         .isString()
         .withMessage("category name must be a string"),
-    body("priceConfiguration")
+    body("priceCofigration")
         .exists()
-        .withMessage("priceConfiguration is required")
+        .withMessage("priceCofigration is required")
         .isObject()
-        .withMessage("priceConfiguration must be an object"),
-    body("priceConfiguration.*.priceType")
+        .withMessage("priceCofigration must be an object"),
+    body("priceCofigration.*.priceType")
         .exists()
         .withMessage("priceType is required")
         .isIn(["base", "additional"])
         .withMessage("priceType must be either 'base' or 'additional'"),
-    body("priceConfiguration.*.availableOptions")
+    body("priceCofigration.*.availableOptions")
         .exists()
         .withMessage("availableOptions are required")
         .isArray()
