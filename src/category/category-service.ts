@@ -15,4 +15,19 @@ export class CategoryService {
         );
         return category;
     }
+
+    async getAll() {
+        const categories = await CategoryModel.find();
+        return categories;
+    }
+
+    async getById(categoryId: string) {
+        const category = await CategoryModel.findById(categoryId);
+        return category;
+    }
+
+    async delete(categoryId: string) {
+        const category = await CategoryModel.findByIdAndDelete(categoryId);
+        return category;
+    }
 }

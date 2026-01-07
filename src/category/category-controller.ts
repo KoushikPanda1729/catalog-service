@@ -71,4 +71,84 @@ export class CategoryController {
             category,
         });
     }
+
+    async getAll(
+        _req: Request,
+        res: Response,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _next: NextFunction
+    ): Promise<void> {
+        const categories = await this.categoryService.getAll();
+        this.logger.info("Fetched all categories");
+        res.status(200).json({
+            message: "Categories fetched successfully",
+            categories,
+        });
+    }
+
+    async getById(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        const result = validationResult(req);
+        if (!result.isEmpty()) {
+            return next(
+                createHttpError(400, "Validation Error", {
+                    errors: result.array(),
+                })
+            );
+        }
+
+        const { id } = req.params;
+
+        if (!id) {
+            return next(createHttpError(400, "Category ID is required"));
+        }
+
+        const category = await this.categoryService.getById(id);
+
+        if (!category) {
+            return next(createHttpError(404, "Category not found"));
+        }
+
+        this.logger.info("Fetched category by ID: " + id);
+        res.status(200).json({
+            message: "Category fetched successfully",
+            category,
+        });
+    }
+
+    async delete(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        const result = validationResult(req);
+        if (!result.isEmpty()) {
+            return next(
+                createHttpError(400, "Validation Error", {
+                    errors: result.array(),
+                })
+            );
+        }
+
+        const { id } = req.params;
+
+        if (!id) {
+            return next(createHttpError(400, "Category ID is required"));
+        }
+
+        const category = await this.categoryService.delete(id);
+
+        if (!category) {
+            return next(createHttpError(404, "Category not found"));
+        }
+
+        this.logger.info("Category deleted successfully: " + id);
+        res.status(200).json({
+            message: "Category deleted successfully",
+            category,
+        });
+    }
 }
