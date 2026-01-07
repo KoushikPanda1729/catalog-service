@@ -7,19 +7,21 @@ import config from "config";
 import logger from "./config/logger";
 import type { HttpError } from "http-errors";
 import categoryRouter from "./category/category-route";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
     res.status(200).send(config.get("server.port"));
 });
 
 app.use("/categories", categoryRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
+app.use((err: HttpError, _req: Request, res: Response, _next: NextFunction) => {
     logger.error(err.message);
     const statusCode = err.status || 500;
     res.status(statusCode).json({
