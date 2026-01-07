@@ -4,11 +4,14 @@ import createHttpError from "http-errors";
 import type { Product } from "./product-types";
 import type { ProductService } from "./product-service";
 import type { Logger } from "winston";
+import type { UploadedFile } from "express-fileupload";
+import type { IFileStorage } from "../common/services/IFileStorage";
 
 export class ProductController {
     constructor(
         private productService: ProductService,
-        private logger: Logger
+        private logger: Logger,
+        private fileStorage: IFileStorage
     ) {}
 
     async create(
@@ -171,5 +174,72 @@ export class ProductController {
             message: "Product deleted successfully",
             product,
         });
+    }
+
+    async uploadImage(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        if (!req.files || Object.keys(req.files).length === 0) {
+            return next(createHttpError(400, "No files were uploaded"));
+        }
+
+        const uploadedFile = req.files.image as UploadedFile;
+
+        if (!uploadedFile) {
+            return next(createHttpError(400, "Image field is required"));
+        }
+
+        const allowedMimeTypes = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp",
+            "image/gif",
+        ];
+
+        if (!allowedMimeTypes.includes(uploadedFile.mimetype)) {
+            return next(
+                createHttpError(
+                    400,
+                    "Invalid file type. Only images are allowed (jpeg, jpg, png, webp, gif)"
+                )
+            );
+        }
+
+        const maxSize = 5 * 1024 * 1024;
+        if (uploadedFile.size > maxSize) {
+            return next(createHttpError(400, "File size exceeds 5MB limit"));
+        }
+
+        try {
+            const result = await this.fileStorage.upload(
+                uploadedFile.data,
+                uploadedFile.name,
+                uploadedFile.mimetype,
+                "products"
+            );
+
+            this.logger.info(
+                `Product image uploaded successfully: ${result.key}`
+            );
+
+            res.status(201).json({
+                message: "Image uploaded successfully",
+                data: {
+                    url: result.url,
+                    key: result.key,
+                },
+            });
+        } catch (error) {
+            this.logger.error("Image upload error:", error);
+            return next(
+                createHttpError(
+                    500,
+                    "Failed to upload image. Please try again."
+                )
+            );
+        }
     }
 }

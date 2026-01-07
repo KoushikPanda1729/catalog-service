@@ -14,12 +14,18 @@ import { asyncHandler } from "../common/utils/asyncHandler";
 import { authenticate } from "../common/middleware/authenticate";
 import { authorize } from "../common/middleware/authorize";
 import { Roles } from "../common/constants/roles";
+import { FileStorageFactory } from "../common/services/FileStorageFactory";
 
 const router = Router();
 
-const productService = new ProductService();
+const fileStorage = FileStorageFactory.create();
+const productService = new ProductService(fileStorage);
 
-const productController = new ProductController(productService, logger);
+const productController = new ProductController(
+    productService,
+    logger,
+    fileStorage
+);
 
 router.get(
     "/",
@@ -63,6 +69,15 @@ router.delete(
     idParamValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
         productController.delete(req, res, next)
+    )
+);
+
+router.post(
+    "/upload-image",
+    authenticate,
+    authorize([Roles.ADMIN, Roles.MANAGER]),
+    asyncHandler((req: Request, res: Response, next: NextFunction) =>
+        productController.uploadImage(req, res, next)
     )
 );
 

@@ -2,7 +2,7 @@
     "info": {
         "_postman_id": "catalog-service-001",
         "name": "Catalog Service API",
-        "description": "API collection for Catalog Service with JWT authentication from Auth Service",
+        "description": "API collection for Catalog Service with JWT authentication from Auth Service and S3 image upload",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         "_exporter_id": "12345"
     },
@@ -17,11 +17,9 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "// Extract and save access token from response",
                                     "if (pm.response.code === 200) {",
                                     "    const jsonData = pm.response.json();",
                                     "    ",
-                                    "    // Save tokens to environment variables if they exist in response",
                                     "    if (jsonData.accessToken) {",
                                     "        pm.environment.set(\"access_token\", jsonData.accessToken);",
                                     "        console.log(\"Access token saved to environment\");",
@@ -32,7 +30,6 @@
                                     "        console.log(\"Refresh token saved to environment\");",
                                     "    }",
                                     "    ",
-                                    "    // Extract cookies (accessToken and refreshToken are set as httpOnly cookies)",
                                     "    const cookies = pm.cookies.all();",
                                     "    console.log(\"Cookies received:\", cookies);",
                                     "    ",
@@ -70,7 +67,7 @@
                             "host": ["{{auth_service_url}}"],
                             "path": ["auth", "login"]
                         },
-                        "description": "Login with admin credentials to obtain JWT access token. The token is automatically saved to environment variables and cookies."
+                        "description": "Login with admin credentials to obtain JWT access token"
                     },
                     "response": []
                 }
@@ -81,29 +78,99 @@
             "name": "Categories",
             "item": [
                 {
+                    "name": "Get All Categories",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains categories array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('categories');",
+                                    "    pm.expect(jsonData.categories).to.be.an('array');",
+                                    "    ",
+                                    "    if (jsonData.categories.length > 0) {",
+                                    "        pm.environment.set(\"category_id\", jsonData.categories[0]._id);",
+                                    "    }",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{catalog_service_url}}/categories",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["categories"]
+                        },
+                        "description": "Fetch all categories (No authentication required)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Category by ID",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains category\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('category');",
+                                    "    pm.expect(jsonData.category).to.have.property('_id');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{catalog_service_url}}/categories/{{category_id}}",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["categories", "{{category_id}}"]
+                        },
+                        "description": "Fetch a specific category by ID"
+                    },
+                    "response": []
+                },
+                {
                     "name": "Create Category",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "// Test response status",
                                     "pm.test(\"Category created successfully\", function () {",
                                     "    pm.response.to.have.status(201);",
                                     "});",
                                     "",
-                                    "// Test response structure",
                                     "pm.test(\"Response contains category data\", function () {",
                                     "    const jsonData = pm.response.json();",
                                     "    pm.expect(jsonData).to.have.property('message');",
                                     "    pm.expect(jsonData).to.have.property('category');",
+                                    "    ",
+                                    "    if (jsonData.category && jsonData.category._id) {",
+                                    "        pm.environment.set(\"category_id\", jsonData.category._id);",
+                                    "        console.log(\"Category ID saved:\", jsonData.category._id);",
+                                    "    }",
                                     "});",
                                     "",
-                                    "// Test category properties",
                                     "pm.test(\"Category has required fields\", function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    const category = jsonData.category;",
-                                    "    ",
+                                    "    const category = pm.response.json().category;",
                                     "    pm.expect(category).to.have.property('_id');",
                                     "    pm.expect(category).to.have.property('name');",
                                     "    pm.expect(category).to.have.property('priceCofigration');",
@@ -112,20 +179,6 @@
                                 ],
                                 "type": "text/javascript"
                             }
-                        },
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "// Check if access token exists",
-                                    "const accessToken = pm.environment.get(\"access_token\");",
-                                    "",
-                                    "if (!accessToken || accessToken === \"\") {",
-                                    "    console.log(\"No access token found. Please run the 'Login (Admin)' request first.\");",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
                         }
                     ],
                     "request": {
@@ -148,32 +201,31 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Pizza\",\n    \"priceCofigration\": {\n        \"base\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": [\"small\", \"medium\", \"large\"]\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Size\",\n            \"wigetType\": \"radio\",\n            \"defaultValue\": \"medium\",\n            \"availableOptions\": [\"small\", \"medium\", \"large\"]\n        },\n        {\n            \"name\": \"Crust\",\n            \"wigetType\": \"radio\",\n            \"defaultValue\": \"thin\",\n            \"availableOptions\": [\"thin\", \"thick\", \"stuffed\"]\n        }\n    ]\n}"
+                            "raw": "{\n    \"name\": \"Pizza\",\n    \"priceCofigration\": {\n        \"size\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": [\"small\", \"medium\", \"large\"]\n        },\n        \"toppings\": {\n            \"priceType\": \"additional\",\n            \"availableOptions\": [\"cheese\", \"pepperoni\", \"mushrooms\"]\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Crust\",\n            \"wigetType\": \"radio\",\n            \"defaultValue\": \"thin\",\n            \"availableOptions\": [\"thin\", \"thick\", \"stuffed\"]\n        }\n    ]\n}"
                         },
                         "url": {
                             "raw": "{{catalog_service_url}}/categories",
                             "host": ["{{catalog_service_url}}"],
                             "path": ["categories"]
                         },
-                        "description": "Create a new category with price configuration and attributes. Requires admin role authentication.\n\n**Authentication:** Bearer Token (automatically set from environment variable)\n\n**Required Fields:**\n- name: string\n- priceCofigration: object with nested configuration\n- attributes: array of attribute objects\n\n**Note:** Make sure to run 'Login (Admin)' request first to obtain authentication token."
+                        "description": "Create a new category (Requires ADMIN authentication)"
                     },
                     "response": []
                 },
                 {
-                    "name": "Create Category - Burger",
+                    "name": "Update Category",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Category created successfully\", function () {",
-                                    "    pm.response.to.have.status(201);",
+                                    "pm.test(\"Category updated successfully\", function () {",
+                                    "    pm.response.to.have.status(200);",
                                     "});",
                                     "",
-                                    "pm.test(\"Response contains category data\", function () {",
+                                    "pm.test(\"Response contains updated category\", function () {",
                                     "    const jsonData = pm.response.json();",
                                     "    pm.expect(jsonData).to.have.property('category');",
-                                    "    pm.expect(jsonData.category.name).to.eql(\"Burger\");",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -191,7 +243,7 @@
                                 }
                             ]
                         },
-                        "method": "POST",
+                        "method": "PUT",
                         "header": [
                             {
                                 "key": "Content-Type",
@@ -200,31 +252,32 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Burger\",\n    \"priceCofigration\": {\n        \"base\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": [\"regular\", \"double\"]\n        },\n        \"extras\": {\n            \"priceType\": \"additional\",\n            \"availableOptions\": [\"cheese\", \"bacon\", \"avocado\"]\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Patty\",\n            \"wigetType\": \"radio\",\n            \"defaultValue\": \"regular\",\n            \"availableOptions\": [\"regular\", \"double\"]\n        },\n        {\n            \"name\": \"Extras\",\n            \"wigetType\": \"switch\",\n            \"defaultValue\": \"none\",\n            \"availableOptions\": [\"cheese\", \"bacon\", \"avocado\"]\n        }\n    ]\n}"
+                            "raw": "{\n    \"name\": \"Updated Pizza Category\",\n    \"priceCofigration\": {\n        \"size\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": [\"small\", \"large\", \"extra-large\"]\n        }\n    }\n}"
                         },
                         "url": {
-                            "raw": "{{catalog_service_url}}/categories",
+                            "raw": "{{catalog_service_url}}/categories/{{category_id}}",
                             "host": ["{{catalog_service_url}}"],
-                            "path": ["categories"]
+                            "path": ["categories", "{{category_id}}"]
                         },
-                        "description": "Example: Create Burger category with base and additional price configurations"
+                        "description": "Update an existing category (Requires ADMIN authentication)"
                     },
                     "response": []
                 },
                 {
-                    "name": "Create Category - Beverage",
+                    "name": "Delete Category",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Category created successfully\", function () {",
-                                    "    pm.response.to.have.status(201);",
+                                    "pm.test(\"Category deleted successfully\", function () {",
+                                    "    pm.response.to.have.status(200);",
                                     "});",
                                     "",
-                                    "pm.test(\"Response contains beverage category\", function () {",
+                                    "pm.test(\"Response contains deleted category\", function () {",
                                     "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.category.name).to.eql(\"Beverage\");",
+                                    "    pm.expect(jsonData).to.have.property('message');",
+                                    "    pm.expect(jsonData).to.have.property('category');",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -242,38 +295,313 @@
                                 }
                             ]
                         },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Beverage\",\n    \"priceCofigration\": {\n        \"base\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": [\"small\", \"medium\", \"large\"]\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Size\",\n            \"wigetType\": \"radio\",\n            \"defaultValue\": \"medium\",\n            \"availableOptions\": [\"small\", \"medium\", \"large\"]\n        },\n        {\n            \"name\": \"Ice\",\n            \"wigetType\": \"switch\",\n            \"defaultValue\": \"yes\",\n            \"availableOptions\": [\"yes\", \"no\"]\n        }\n    ]\n}"
-                        },
+                        "method": "DELETE",
+                        "header": [],
                         "url": {
-                            "raw": "{{catalog_service_url}}/categories",
+                            "raw": "{{catalog_service_url}}/categories/{{category_id}}",
                             "host": ["{{catalog_service_url}}"],
-                            "path": ["categories"]
+                            "path": ["categories", "{{category_id}}"]
                         },
-                        "description": "Example: Create Beverage category"
+                        "description": "Delete a category (Requires ADMIN authentication)"
                     },
                     "response": []
                 }
             ],
-            "description": "Category management endpoints",
-            "auth": {
-                "type": "bearer",
-                "bearer": [
-                    {
-                        "key": "token",
-                        "value": "{{access_token}}",
-                        "type": "string"
-                    }
-                ]
-            }
+            "description": "Category CRUD operations"
+        },
+        {
+            "name": "Products",
+            "item": [
+                {
+                    "name": "Get All Products",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains products array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('products');",
+                                    "    pm.expect(jsonData.products).to.be.an('array');",
+                                    "    ",
+                                    "    if (jsonData.products.length > 0) {",
+                                    "        pm.environment.set(\"product_id\", jsonData.products[0]._id);",
+                                    "    }",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{catalog_service_url}}/products",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["products"]
+                        },
+                        "description": "Fetch all products (No authentication required)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Product by ID",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains product\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('product');",
+                                    "    pm.expect(jsonData.product).to.have.property('_id');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{catalog_service_url}}/products/{{product_id}}",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["products", "{{product_id}}"]
+                        },
+                        "description": "Fetch a specific product by ID with populated category"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Upload Product Image",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Image uploaded successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains S3 URL and key\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('data');",
+                                    "    pm.expect(jsonData.data).to.have.property('url');",
+                                    "    pm.expect(jsonData.data).to.have.property('key');",
+                                    "    ",
+                                    "    if (jsonData.data.url) {",
+                                    "        pm.environment.set(\"product_image_url\", jsonData.data.url);",
+                                    "        console.log(\"Image URL saved:\", jsonData.data.url);",
+                                    "    }",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{catalog_service_url}}/products/upload-image",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["products", "upload-image"]
+                        },
+                        "description": "Upload product image to AWS S3 (Requires ADMIN or MANAGER authentication)\n\nReturns S3 URL and key for the uploaded image.\n\nSupported formats: JPEG, JPG, PNG, WEBP, GIF\nMax size: 5MB"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Product",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Product created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains product data\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('message');",
+                                    "    pm.expect(jsonData).to.have.property('product');",
+                                    "    ",
+                                    "    if (jsonData.product && jsonData.product._id) {",
+                                    "        pm.environment.set(\"product_id\", jsonData.product._id);",
+                                    "        console.log(\"Product ID saved:\", jsonData.product._id);",
+                                    "    }",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Product has required fields\", function () {",
+                                    "    const product = pm.response.json().product;",
+                                    "    pm.expect(product).to.have.property('_id');",
+                                    "    pm.expect(product).to.have.property('name');",
+                                    "    pm.expect(product).to.have.property('image');",
+                                    "    pm.expect(product).to.have.property('category');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Margherita Pizza\",\n    \"description\": \"Classic pizza with tomato sauce, mozzarella, and basil\",\n    \"image\": \"{{product_image_url}}\",\n    \"category\": \"{{category_id}}\",\n    \"priceConfiguration\": {\n        \"small\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": {\n                \"small\": 10,\n                \"medium\": 15,\n                \"large\": 20\n            }\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Size\",\n            \"value\": \"medium\"\n        }\n    ],\n    \"tenantId\": \"1\",\n    \"isPublished\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{catalog_service_url}}/products",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["products"]
+                        },
+                        "description": "Create a new product with S3 image URL (Requires ADMIN authentication)\n\nNote: Upload image first using 'Upload Product Image' endpoint, then use the returned URL here."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Product",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Product updated successfully\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains updated product\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('product');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Margherita Pizza\",\n    \"description\": \"Updated description for the pizza\",\n    \"isPublished\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{catalog_service_url}}/products/{{product_id}}",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["products", "{{product_id}}"]
+                        },
+                        "description": "Update an existing product (Requires ADMIN authentication)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Product",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Product deleted successfully\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains deleted product\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('message');",
+                                    "    pm.expect(jsonData).to.have.property('product');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{catalog_service_url}}/products/{{product_id}}",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["products", "{{product_id}}"]
+                        },
+                        "description": "Delete a product (Requires ADMIN authentication)"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Product CRUD operations with S3 image upload"
         },
         {
             "name": "Health Check",
@@ -305,21 +633,5 @@
                 "type": "string"
             }
         ]
-    },
-    "event": [
-        {
-            "listen": "prerequest",
-            "script": {
-                "type": "text/javascript",
-                "exec": [""]
-            }
-        },
-        {
-            "listen": "test",
-            "script": {
-                "type": "text/javascript",
-                "exec": [""]
-            }
-        }
-    ]
+    }
 }

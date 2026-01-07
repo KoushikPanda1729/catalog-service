@@ -9,11 +9,30 @@ import type { HttpError } from "http-errors";
 import categoryRouter from "./category/category-route";
 import productRouter from "./product/product-route";
 import cookieParser from "cookie-parser";
+import fileUpload from "express-fileupload";
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+    fileUpload({
+        limits: { fileSize: 5 * 1024 * 1024 },
+        abortOnLimit: true,
+        limitHandler: (_req: Request, res: Response) => {
+            res.status(413).json({
+                errors: [
+                    {
+                        type: "FileSizeError",
+                        message: "File size exceeds 5MB limit",
+                        path: "",
+                        location: "",
+                    },
+                ],
+            });
+        },
+    })
+);
 
 app.get("/", (_req: Request, res: Response) => {
     res.status(200).send(config.get("server.port"));
