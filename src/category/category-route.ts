@@ -6,6 +6,7 @@ import {
 } from "express";
 import { CategoryController } from "./category-controller";
 import categoryValidator from "./category-validator";
+import updateCategoryValidator from "./update-category-validator";
 import { CategoryService } from "./category-service";
 import logger from "../config/logger";
 import { asyncHandler } from "../common/utils/asyncHandler";
@@ -25,6 +26,16 @@ router.post(
     categoryValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
         categoryController.create(req, res, next)
+    )
+);
+
+router.put(
+    "/:id",
+    authenticate,
+    authorize(["admin"]),
+    updateCategoryValidator,
+    asyncHandler((req: Request, res: Response, next: NextFunction) =>
+        categoryController.update(req, res, next)
     )
 );
 

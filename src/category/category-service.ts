@@ -6,4 +6,13 @@ export class CategoryService {
         const category = new CategoryModel(categoryData);
         return category.save();
     }
+
+    async update(categoryId: string, categoryData: Partial<Category>) {
+        const category = await CategoryModel.findByIdAndUpdate(
+            categoryId,
+            categoryData,
+            { new: true, runValidators: true }
+        );
+        return category;
+    }
 }

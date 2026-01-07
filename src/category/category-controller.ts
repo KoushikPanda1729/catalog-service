@@ -34,4 +34,41 @@ export class CategoryController {
         );
         res.status(201).json({ message: "create categories", category });
     }
+
+    async update(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        const result = validationResult(req);
+        if (!result.isEmpty()) {
+            return next(
+                createHttpError(400, "Validation Error", {
+                    errors: result.array(),
+                })
+            );
+        }
+
+        const { id } = req.params;
+
+        if (!id) {
+            return next(createHttpError(400, "Category ID is required"));
+        }
+
+        const updateData = req.body as Partial<Category>;
+
+        const category = await this.categoryService.update(id, updateData);
+
+        if (!category) {
+            return next(createHttpError(404, "Category not found"));
+        }
+
+        this.logger.info(
+            "Category updated successfully " + category._id.toString()
+        );
+        res.status(200).json({
+            message: "Category updated successfully",
+            category,
+        });
+    }
 }
