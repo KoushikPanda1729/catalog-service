@@ -4,11 +4,11 @@ import {
     type Response,
     type NextFunction,
 } from "express";
-import { CategoryController } from "./category-controller";
-import categoryValidator from "./category-validator";
-import updateCategoryValidator from "./update-category-validator";
+import { ProductController } from "./product-controller";
+import productValidator from "./product-validator";
+import updateProductValidator from "./update-product-validator";
 import idParamValidator from "./id-param-validator";
-import { CategoryService } from "./category-service";
+import { ProductService } from "./product-service";
 import logger from "../config/logger";
 import { asyncHandler } from "../common/utils/asyncHandler";
 import { authenticate } from "../common/middleware/authenticate";
@@ -17,14 +17,14 @@ import { Roles } from "../common/constants/roles";
 
 const router = Router();
 
-const categoryService = new CategoryService();
+const productService = new ProductService();
 
-const categoryController = new CategoryController(categoryService, logger);
+const productController = new ProductController(productService, logger);
 
 router.get(
     "/",
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
-        categoryController.getAll(req, res, next)
+        productController.getAll(req, res, next)
     )
 );
 
@@ -32,7 +32,7 @@ router.get(
     "/:id",
     idParamValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
-        categoryController.getById(req, res, next)
+        productController.getById(req, res, next)
     )
 );
 
@@ -40,9 +40,9 @@ router.post(
     "/",
     authenticate,
     authorize([Roles.ADMIN]),
-    categoryValidator,
+    productValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
-        categoryController.create(req, res, next)
+        productController.create(req, res, next)
     )
 );
 
@@ -50,9 +50,9 @@ router.put(
     "/:id",
     authenticate,
     authorize([Roles.ADMIN]),
-    updateCategoryValidator,
+    updateProductValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
-        categoryController.update(req, res, next)
+        productController.update(req, res, next)
     )
 );
 
@@ -62,7 +62,7 @@ router.delete(
     authorize([Roles.ADMIN]),
     idParamValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
-        categoryController.delete(req, res, next)
+        productController.delete(req, res, next)
     )
 );
 

@@ -7,6 +7,7 @@ import config from "config";
 import logger from "./config/logger";
 import type { HttpError } from "http-errors";
 import categoryRouter from "./category/category-route";
+import productRouter from "./product/product-route";
 import cookieParser from "cookie-parser";
 
 const app = express();
@@ -19,6 +20,7 @@ app.get("/", (_req: Request, res: Response) => {
 });
 
 app.use("/categories", categoryRouter);
+app.use("/products", productRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: HttpError, _req: Request, res: Response, _next: NextFunction) => {
