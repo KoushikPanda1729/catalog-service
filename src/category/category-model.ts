@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import type { Attribute, Category, PriceConfiguration } from "./category-types";
 
 const priceCofigrationSchema = new mongoose.Schema<PriceConfiguration>({
@@ -18,6 +19,8 @@ const categorySchema = new mongoose.Schema<Category>({
     priceCofigration: { type: Map, of: priceCofigrationSchema, required: true },
     attributes: { type: [attributeSchema], required: true },
 });
+
+categorySchema.plugin(aggregatePaginate);
 
 const CategoryModel = mongoose.model<Category>("Category", categorySchema);
 

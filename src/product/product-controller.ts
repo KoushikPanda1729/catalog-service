@@ -137,16 +137,35 @@ export class ProductController {
     }
 
     async getAll(
-        _req: Request,
+        req: Request,
         res: Response,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _next: NextFunction
     ): Promise<void> {
-        const products = await this.productService.getAll();
+        const { q, categoryId, tenantId, isPublished, limit, page } = req.query;
+
+        const filters: {
+            q?: string;
+            categoryId?: string;
+            tenantId?: string;
+            isPublished?: boolean;
+            limit?: number;
+            page?: number;
+        } = {};
+
+        if (q) filters.q = q as string;
+        if (categoryId) filters.categoryId = categoryId as string;
+        if (tenantId) filters.tenantId = tenantId as string;
+        if (isPublished !== undefined)
+            filters.isPublished = isPublished === "true";
+        if (limit) filters.limit = parseInt(limit as string);
+        if (page) filters.page = parseInt(page as string);
+
+        const result = await this.productService.getAll(filters);
         this.logger.info("Fetched all products");
         res.status(200).json({
             message: "Products fetched successfully",
-            products,
+            ...result,
         });
     }
 

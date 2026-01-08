@@ -73,16 +73,28 @@ export class CategoryController {
     }
 
     async getAll(
-        _req: Request,
+        req: Request,
         res: Response,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _next: NextFunction
     ): Promise<void> {
-        const categories = await this.categoryService.getAll();
+        const { q, limit, page } = req.query;
+
+        const filters: {
+            q?: string;
+            limit?: number;
+            page?: number;
+        } = {};
+
+        if (q) filters.q = q as string;
+        if (limit) filters.limit = parseInt(limit as string);
+        if (page) filters.page = parseInt(page as string);
+
+        const result = await this.categoryService.getAll(filters);
         this.logger.info("Fetched all categories");
         res.status(200).json({
             message: "Categories fetched successfully",
-            categories,
+            ...result,
         });
     }
 
