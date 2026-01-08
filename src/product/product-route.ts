@@ -45,7 +45,7 @@ router.get(
 router.post(
     "/",
     authenticate,
-    authorize([Roles.ADMIN]),
+    authorize([Roles.ADMIN, Roles.MANAGER]),
     productValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
         productController.create(req, res, next)
@@ -55,7 +55,7 @@ router.post(
 router.put(
     "/:id",
     authenticate,
-    authorize([Roles.ADMIN]),
+    authorize([Roles.ADMIN, Roles.MANAGER]),
     updateProductValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
         productController.update(req, res, next)
@@ -65,7 +65,7 @@ router.put(
 router.delete(
     "/:id",
     authenticate,
-    authorize([Roles.ADMIN]),
+    authorize([Roles.ADMIN, Roles.MANAGER]),
     idParamValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
         productController.delete(req, res, next)

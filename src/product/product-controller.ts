@@ -39,6 +39,18 @@ export class ProductController {
             isPublished,
         } = req.body as Product;
 
+        const userRole = req.user?.role;
+        const userTenant = req.user?.tenant;
+
+        if (userRole === "manager" && String(userTenant) !== String(tenantId)) {
+            return next(
+                createHttpError(
+                    403,
+                    "You can only create products for your own tenant"
+                )
+            );
+        }
+
         const product = await this.productService.create({
             name,
             description,
@@ -79,7 +91,35 @@ export class ProductController {
             return next(createHttpError(400, "Product ID is required"));
         }
 
+        const userRole = req.user?.role;
+        const userTenant = req.user?.tenant;
+
+        if (userRole === "manager") {
+            const existingProduct = await this.productService.getById(id);
+            if (!existingProduct) {
+                return next(createHttpError(404, "Product not found"));
+            }
+            if (String(existingProduct.tenantId) !== String(userTenant)) {
+                return next(
+                    createHttpError(
+                        403,
+                        "You can only update products from your own tenant"
+                    )
+                );
+            }
+        }
+
         const updateData = req.body as Partial<Product>;
+
+        if (
+            userRole === "manager" &&
+            updateData.tenantId &&
+            String(updateData.tenantId) !== String(userTenant)
+        ) {
+            return next(
+                createHttpError(403, "You cannot change product tenant")
+            );
+        }
 
         const product = await this.productService.update(id, updateData);
 
@@ -161,6 +201,24 @@ export class ProductController {
 
         if (!id) {
             return next(createHttpError(400, "Product ID is required"));
+        }
+
+        const userRole = req.user?.role;
+        const userTenant = req.user?.tenant;
+
+        if (userRole === "manager") {
+            const existingProduct = await this.productService.getById(id);
+            if (!existingProduct) {
+                return next(createHttpError(404, "Product not found"));
+            }
+            if (String(existingProduct.tenantId) !== String(userTenant)) {
+                return next(
+                    createHttpError(
+                        403,
+                        "You can only delete products from your own tenant"
+                    )
+                );
+            }
         }
 
         const product = await this.productService.delete(id);

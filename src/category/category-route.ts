@@ -39,7 +39,7 @@ router.get(
 router.post(
     "/",
     authenticate,
-    authorize([Roles.ADMIN]),
+    authorize([Roles.ADMIN, Roles.MANAGER]),
     categoryValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
         categoryController.create(req, res, next)
@@ -49,7 +49,7 @@ router.post(
 router.put(
     "/:id",
     authenticate,
-    authorize([Roles.ADMIN]),
+    authorize([Roles.ADMIN, Roles.MANAGER]),
     updateCategoryValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
         categoryController.update(req, res, next)
@@ -59,7 +59,7 @@ router.put(
 router.delete(
     "/:id",
     authenticate,
-    authorize([Roles.ADMIN]),
+    authorize([Roles.ADMIN, Roles.MANAGER]),
     idParamValidator,
     asyncHandler((req: Request, res: Response, next: NextFunction) =>
         categoryController.delete(req, res, next)

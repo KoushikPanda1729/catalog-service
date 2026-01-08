@@ -2,6 +2,7 @@ export interface AuthPayload {
     sub: number;
     role: string;
     id?: number;
+    tenant?: string;
 }
 
 declare global {

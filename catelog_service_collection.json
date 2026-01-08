@@ -2,7 +2,7 @@
     "info": {
         "_postman_id": "catalog-service-001",
         "name": "Catalog Service API",
-        "description": "API collection for Catalog Service with JWT authentication from Auth Service and S3 image upload",
+        "description": "API collection for Catalog Service with JWT authentication, S3 image upload, and multi-tenant access control",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         "_exporter_id": "12345"
     },
@@ -67,7 +67,68 @@
                             "host": ["{{auth_service_url}}"],
                             "path": ["auth", "login"]
                         },
-                        "description": "Login with admin credentials to obtain JWT access token"
+                        "description": "Login with admin credentials. Admin has full access to all tenants."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login (Manager)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    ",
+                                    "    if (jsonData.accessToken) {",
+                                    "        pm.environment.set(\"access_token\", jsonData.accessToken);",
+                                    "        console.log(\"Access token saved to environment\");",
+                                    "    }",
+                                    "    ",
+                                    "    if (jsonData.refreshToken) {",
+                                    "        pm.environment.set(\"refresh_token\", jsonData.refreshToken);",
+                                    "        console.log(\"Refresh token saved to environment\");",
+                                    "    }",
+                                    "    ",
+                                    "    const cookies = pm.cookies.all();",
+                                    "    console.log(\"Cookies received:\", cookies);",
+                                    "    ",
+                                    "    pm.test(\"Login successful\", function () {",
+                                    "        pm.response.to.have.status(200);",
+                                    "    });",
+                                    "    ",
+                                    "    pm.test(\"User ID returned\", function () {",
+                                    "        pm.expect(jsonData).to.have.property('id');",
+                                    "    });",
+                                    "} else {",
+                                    "    pm.test(\"Login failed with status: \" + pm.response.code, function () {",
+                                    "        pm.expect.fail(\"Login request failed\");",
+                                    "    });",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"{{manager_email}}\",\n    \"password\": \"{{manager_password}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{auth_service_url}}/auth/login",
+                            "host": ["{{auth_service_url}}"],
+                            "path": ["auth", "login"]
+                        },
+                        "description": "Login with manager credentials. Manager can only manage products from their own tenant."
                     },
                     "response": []
                 }
@@ -208,7 +269,7 @@
                             "host": ["{{catalog_service_url}}"],
                             "path": ["categories"]
                         },
-                        "description": "Create a new category (Requires ADMIN authentication)"
+                        "description": "Create a new category (Requires ADMIN or MANAGER authentication)"
                     },
                     "response": []
                 },
@@ -259,7 +320,7 @@
                             "host": ["{{catalog_service_url}}"],
                             "path": ["categories", "{{category_id}}"]
                         },
-                        "description": "Update an existing category (Requires ADMIN authentication)"
+                        "description": "Update an existing category (Requires ADMIN or MANAGER authentication)"
                     },
                     "response": []
                 },
@@ -302,7 +363,7 @@
                             "host": ["{{catalog_service_url}}"],
                             "path": ["categories", "{{category_id}}"]
                         },
-                        "description": "Delete a category (Requires ADMIN authentication)"
+                        "description": "Delete a category (Requires ADMIN or MANAGER authentication)"
                     },
                     "response": []
                 }
@@ -495,14 +556,14 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Margherita Pizza\",\n    \"description\": \"Classic pizza with tomato sauce, mozzarella, and basil\",\n    \"image\": \"{{product_image_url}}\",\n    \"category\": \"{{category_id}}\",\n    \"priceConfiguration\": {\n        \"small\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": {\n                \"small\": 10,\n                \"medium\": 15,\n                \"large\": 20\n            }\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Size\",\n            \"value\": \"medium\"\n        }\n    ],\n    \"tenantId\": \"1\",\n    \"isPublished\": true\n}"
+                            "raw": "{\n    \"name\": \"Margherita Pizza\",\n    \"description\": \"Classic pizza with tomato sauce, mozzarella, and basil\",\n    \"image\": \"{{product_image_url}}\",\n    \"category\": \"{{category_id}}\",\n    \"priceConfiguration\": {\n        \"small\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": {\n                \"small\": 10,\n                \"medium\": 15,\n                \"large\": 20\n            }\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Size\",\n            \"value\": \"medium\"\n        }\n    ],\n    \"tenantId\": \"{{tenant_id}}\",\n    \"isPublished\": true\n}"
                         },
                         "url": {
                             "raw": "{{catalog_service_url}}/products",
                             "host": ["{{catalog_service_url}}"],
                             "path": ["products"]
                         },
-                        "description": "Create a new product with S3 image URL (Requires ADMIN authentication)\n\nNote: Upload image first using 'Upload Product Image' endpoint, then use the returned URL here."
+                        "description": "Create a new product with S3 image URL (Requires ADMIN or MANAGER authentication)\n\nNote: \n- Upload image first using 'Upload Product Image' endpoint\n- ADMIN: Can create products for any tenant\n- MANAGER: Can only create products for their own tenant"
                     },
                     "response": []
                 },
@@ -546,14 +607,14 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Updated Margherita Pizza\",\n    \"description\": \"Updated description for the pizza\",\n    \"isPublished\": false\n}"
+                            "raw": "{\n    \"name\": \"Updated Margherita Pizza\",\n    \"description\": \"Updated description for the pizza\",\n    \"image\": \"{{product_image_url}}\",\n    \"isPublished\": false\n}"
                         },
                         "url": {
                             "raw": "{{catalog_service_url}}/products/{{product_id}}",
                             "host": ["{{catalog_service_url}}"],
                             "path": ["products", "{{product_id}}"]
                         },
-                        "description": "Update an existing product (Requires ADMIN authentication)"
+                        "description": "Update an existing product (Requires ADMIN or MANAGER authentication)\n\nNote:\n- ADMIN: Can update any product from any tenant\n- MANAGER: Can only update products from their own tenant\n- Image can be updated - old image will be deleted from S3 automatically"
                     },
                     "response": []
                 },
@@ -596,12 +657,12 @@
                             "host": ["{{catalog_service_url}}"],
                             "path": ["products", "{{product_id}}"]
                         },
-                        "description": "Delete a product (Requires ADMIN authentication)"
+                        "description": "Delete a product (Requires ADMIN or MANAGER authentication)\n\nNote:\n- ADMIN: Can delete any product from any tenant\n- MANAGER: Can only delete products from their own tenant\n- Product image will be automatically deleted from S3"
                     },
                     "response": []
                 }
             ],
-            "description": "Product CRUD operations with S3 image upload"
+            "description": "Product CRUD operations with S3 image upload and multi-tenant access control"
         },
         {
             "name": "Health Check",
