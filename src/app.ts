@@ -3,6 +3,7 @@ import express, {
     type Request,
     type Response,
 } from "express";
+import cors from "cors";
 import config from "config";
 import logger from "./config/logger";
 import type { HttpError } from "http-errors";
@@ -14,6 +15,12 @@ import fileUpload from "express-fileupload";
 
 const app = express();
 
+app.use(
+    cors({
+        origin: true,
+        credentials: true,
+    })
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(
