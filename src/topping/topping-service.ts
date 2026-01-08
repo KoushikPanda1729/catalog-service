@@ -2,7 +2,6 @@ import ToppingModel from "./topping-model";
 import type { Topping } from "./topping-types";
 import type { AggregatePaginateModel } from "mongoose";
 import type { IFileStorage } from "../common/services/IFileStorage";
-import mongoose from "mongoose";
 
 export class ToppingService {
     constructor(private fileStorage?: IFileStorage) {}
@@ -57,11 +56,7 @@ export class ToppingService {
         }
 
         if (filters?.tenantId) {
-            if (mongoose.Types.ObjectId.isValid(filters.tenantId)) {
-                matchStage.tenantId = new mongoose.Types.ObjectId(
-                    filters.tenantId
-                );
-            }
+            matchStage.tenantId = filters.tenantId;
         }
 
         if (filters?.isPublished !== undefined) {
