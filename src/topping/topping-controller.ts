@@ -1,15 +1,15 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { validationResult } from "express-validator";
 import createHttpError from "http-errors";
-import type { Product } from "./product-types";
-import type { ProductService } from "./product-service";
+import type { Topping } from "./topping-types";
+import type { ToppingService } from "./topping-service";
 import type { Logger } from "winston";
 import type { UploadedFile } from "express-fileupload";
 import type { IFileStorage } from "../common/services/IFileStorage";
 
-export class ProductController {
+export class ToppingController {
     constructor(
-        private productService: ProductService,
+        private toppingService: ToppingService,
         private logger: Logger,
         private fileStorage: IFileStorage
     ) {}
@@ -28,17 +28,9 @@ export class ProductController {
             );
         }
 
-        const {
-            name,
-            description,
-            image,
-            category,
-            priceConfiguration,
-            attributes,
-            isPublished,
-        } = req.body as Omit<
-            Product,
-            "_id" | "tenantId" | "createdAt" | "updatedAt"
+        const { name, image, price, isPublished } = req.body as Omit<
+            Topping,
+            "_id" | "tenantId"
         >;
 
         const userRole = req.user?.role;
@@ -70,23 +62,20 @@ export class ProductController {
         }
 
         try {
-            const product = await this.productService.create({
+            const topping = await this.toppingService.create({
                 name,
-                description,
                 image,
-                category,
-                priceConfiguration,
-                attributes,
+                price,
                 tenantId,
                 isPublished,
-            } as Product);
+            } as Topping);
 
             this.logger.info(
-                "Product created successfully " + product._id.toString()
+                "Topping created successfully " + topping._id?.toString()
             );
             res.status(201).json({
-                message: "Product created successfully",
-                product,
+                message: "Topping created successfully",
+                topping,
             });
         } catch (error) {
             // Handle MongoDB duplicate key error
@@ -98,7 +87,7 @@ export class ProductController {
                 return next(
                     createHttpError(
                         409,
-                        "Product with this name already exists"
+                        "Topping with this name already exists"
                     )
                 );
             }
@@ -123,49 +112,49 @@ export class ProductController {
         const { id } = req.params;
 
         if (!id) {
-            return next(createHttpError(400, "Product ID is required"));
+            return next(createHttpError(400, "Topping ID is required"));
         }
 
         const userRole = req.user?.role;
         const userTenant = req.user?.tenant;
 
-        // Fetch existing product to check ownership
-        const existingProduct = await this.productService.getById(id);
-        if (!existingProduct) {
-            return next(createHttpError(404, "Product not found"));
+        // Fetch existing topping to check ownership
+        const existingTopping = await this.toppingService.getById(id);
+        if (!existingTopping) {
+            return next(createHttpError(404, "Topping not found"));
         }
 
         // Check permissions based on role
         if (userRole === "manager") {
-            if (String(existingProduct.tenantId) !== String(userTenant)) {
+            if (String(existingTopping.tenantId) !== String(userTenant)) {
                 return next(
                     createHttpError(
                         403,
-                        "You can only update products from your own tenant"
+                        "You can only update toppings from your own tenant"
                     )
                 );
             }
         }
 
-        const updateData = req.body as Partial<Product>;
+        const updateData = req.body as Partial<Topping>;
 
         // Prevent tenant change for managers, ignore tenantId from body
         if (userRole === "manager") {
             delete updateData.tenantId;
         }
 
-        const product = await this.productService.update(id, updateData);
+        const topping = await this.toppingService.update(id, updateData);
 
-        if (!product) {
-            return next(createHttpError(404, "Product not found"));
+        if (!topping) {
+            return next(createHttpError(404, "Topping not found"));
         }
 
         this.logger.info(
-            "Product updated successfully " + product._id.toString()
+            "Topping updated successfully " + topping._id?.toString()
         );
         res.status(200).json({
-            message: "Product updated successfully",
-            product,
+            message: "Topping updated successfully",
+            topping,
         });
     }
 
@@ -175,11 +164,10 @@ export class ProductController {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _next: NextFunction
     ): Promise<void> {
-        const { q, categoryId, tenantId, isPublished, limit, page } = req.query;
+        const { q, tenantId, isPublished, limit, page } = req.query;
 
         const filters: {
             q?: string;
-            categoryId?: string;
             tenantId?: string;
             isPublished?: boolean;
             limit?: number;
@@ -187,17 +175,16 @@ export class ProductController {
         } = {};
 
         if (q) filters.q = q as string;
-        if (categoryId) filters.categoryId = categoryId as string;
         if (tenantId) filters.tenantId = tenantId as string;
         if (isPublished !== undefined)
             filters.isPublished = isPublished === "true";
         if (limit) filters.limit = parseInt(limit as string);
         if (page) filters.page = parseInt(page as string);
 
-        const result = await this.productService.getAll(filters);
-        this.logger.info("Fetched all products");
+        const result = await this.toppingService.getAll(filters);
+        this.logger.info("Fetched all toppings");
         res.status(200).json({
-            message: "Products fetched successfully",
+            message: "Toppings fetched successfully",
             ...result,
         });
     }
@@ -219,19 +206,19 @@ export class ProductController {
         const { id } = req.params;
 
         if (!id) {
-            return next(createHttpError(400, "Product ID is required"));
+            return next(createHttpError(400, "Topping ID is required"));
         }
 
-        const product = await this.productService.getById(id);
+        const topping = await this.toppingService.getById(id);
 
-        if (!product) {
-            return next(createHttpError(404, "Product not found"));
+        if (!topping) {
+            return next(createHttpError(404, "Topping not found"));
         }
 
-        this.logger.info("Fetched product by ID: " + id);
+        this.logger.info("Fetched topping by ID: " + id);
         res.status(200).json({
-            message: "Product fetched successfully",
-            product,
+            message: "Topping fetched successfully",
+            topping,
         });
     }
 
@@ -252,37 +239,37 @@ export class ProductController {
         const { id } = req.params;
 
         if (!id) {
-            return next(createHttpError(400, "Product ID is required"));
+            return next(createHttpError(400, "Topping ID is required"));
         }
 
         const userRole = req.user?.role;
         const userTenant = req.user?.tenant;
 
         if (userRole === "manager") {
-            const existingProduct = await this.productService.getById(id);
-            if (!existingProduct) {
-                return next(createHttpError(404, "Product not found"));
+            const existingTopping = await this.toppingService.getById(id);
+            if (!existingTopping) {
+                return next(createHttpError(404, "Topping not found"));
             }
-            if (String(existingProduct.tenantId) !== String(userTenant)) {
+            if (String(existingTopping.tenantId) !== String(userTenant)) {
                 return next(
                     createHttpError(
                         403,
-                        "You can only delete products from your own tenant"
+                        "You can only delete toppings from your own tenant"
                     )
                 );
             }
         }
 
-        const product = await this.productService.delete(id);
+        const topping = await this.toppingService.delete(id);
 
-        if (!product) {
-            return next(createHttpError(404, "Product not found"));
+        if (!topping) {
+            return next(createHttpError(404, "Topping not found"));
         }
 
-        this.logger.info("Product deleted successfully: " + id);
+        this.logger.info("Topping deleted successfully: " + id);
         res.status(200).json({
-            message: "Product deleted successfully",
-            product,
+            message: "Topping deleted successfully",
+            topping,
         });
     }
 
@@ -328,11 +315,11 @@ export class ProductController {
                 uploadedFile.data,
                 uploadedFile.name,
                 uploadedFile.mimetype,
-                "products"
+                "toppings"
             );
 
             this.logger.info(
-                `Product image uploaded successfully: ${result.key}`
+                `Topping image uploaded successfully: ${result.key}`
             );
 
             res.status(201).json({

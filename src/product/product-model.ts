@@ -32,7 +32,10 @@ const productSchema = new mongoose.Schema<Product>(
             required: true,
         },
         attributes: { type: [attributeSchema], required: true },
-        tenantId: { type: String, required: true },
+        tenantId: {
+            type: String,
+            required: true,
+        },
         isPublished: { type: Boolean, default: false },
     },
     {

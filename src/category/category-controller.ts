@@ -23,16 +23,66 @@ export class CategoryController {
                 })
             );
         }
-        const { name, priceCofigration, attributes } = req.body as Category;
-        const category = await this.categoryService.create({
-            name,
-            priceCofigration,
-            attributes,
-        });
-        this.logger.info(
-            "Category created successfully " + category._id.toString()
-        );
-        res.status(201).json({ message: "create categories", category });
+        const { name, priceCofigration, attributes } = req.body as Omit<
+            Category,
+            "tenantId"
+        >;
+
+        const userRole = req.user?.role;
+        const userTenant = req.user?.tenant;
+
+        // Determine tenantId based on role
+        let tenantId: string;
+
+        if (userRole === "admin") {
+            // Admin must provide tenantId in body
+            const tenantIdFromBody = (req.body as { tenantId?: string })
+                .tenantId;
+            if (!tenantIdFromBody) {
+                return next(
+                    createHttpError(400, "Admin must provide tenantId")
+                );
+            }
+            tenantId = tenantIdFromBody;
+        } else if (userRole === "manager") {
+            // Manager always uses their own tenant from token
+            if (!userTenant) {
+                return next(
+                    createHttpError(400, "Manager tenant not found in token")
+                );
+            }
+            tenantId = String(userTenant);
+        } else {
+            return next(createHttpError(403, "Unauthorized role"));
+        }
+
+        try {
+            const category = await this.categoryService.create({
+                name,
+                priceCofigration,
+                attributes,
+                tenantId,
+            });
+            this.logger.info(
+                "Category created successfully " + category._id.toString()
+            );
+            res.status(201).json({ message: "create categories", category });
+        } catch (error) {
+            // Handle MongoDB duplicate key error
+            if (
+                error instanceof Error &&
+                "code" in error &&
+                error.code === 11000
+            ) {
+                return next(
+                    createHttpError(
+                        409,
+                        "Category with this name already exists for your tenant"
+                    )
+                );
+            }
+            throw error;
+        }
     }
 
     async update(
@@ -55,7 +105,33 @@ export class CategoryController {
             return next(createHttpError(400, "Category ID is required"));
         }
 
+        const userRole = req.user?.role;
+        const userTenant = req.user?.tenant;
+
+        // Fetch existing category to check ownership
+        const existingCategory = await this.categoryService.getById(id);
+        if (!existingCategory) {
+            return next(createHttpError(404, "Category not found"));
+        }
+
+        // Check permissions based on role
+        if (userRole === "manager") {
+            if (String(existingCategory.tenantId) !== String(userTenant)) {
+                return next(
+                    createHttpError(
+                        403,
+                        "You can only update categories from your own tenant"
+                    )
+                );
+            }
+        }
+
         const updateData = req.body as Partial<Category>;
+
+        // Prevent tenant change for managers, ignore tenantId from body
+        if (userRole === "manager") {
+            delete updateData.tenantId;
+        }
 
         const category = await this.categoryService.update(id, updateData);
 
@@ -149,6 +225,27 @@ export class CategoryController {
 
         if (!id) {
             return next(createHttpError(400, "Category ID is required"));
+        }
+
+        const userRole = req.user?.role;
+        const userTenant = req.user?.tenant;
+
+        // Fetch existing category to check ownership
+        const existingCategory = await this.categoryService.getById(id);
+        if (!existingCategory) {
+            return next(createHttpError(404, "Category not found"));
+        }
+
+        // Check permissions based on role
+        if (userRole === "manager") {
+            if (String(existingCategory.tenantId) !== String(userTenant)) {
+                return next(
+                    createHttpError(
+                        403,
+                        "You can only delete categories from your own tenant"
+                    )
+                );
+            }
         }
 
         const category = await this.categoryService.delete(id);

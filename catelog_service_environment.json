@@ -28,13 +28,13 @@
         },
         {
             "key": "manager_email",
-            "value": "manager1@example.com",
+            "value": "manager20@example.com",
             "type": "default",
             "enabled": true
         },
         {
             "key": "manager_password",
-            "value": "Manager@123456",
+            "value": "ManagerPass123!",
             "type": "secret",
             "enabled": true
         },
@@ -71,6 +71,18 @@
         {
             "key": "tenant_id",
             "value": "1",
+            "type": "default",
+            "enabled": true
+        },
+        {
+            "key": "topping_id",
+            "value": "",
+            "type": "default",
+            "enabled": true
+        },
+        {
+            "key": "topping_image_url",
+            "value": "",
             "type": "default",
             "enabled": true
         }

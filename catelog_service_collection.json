@@ -2,7 +2,7 @@
     "info": {
         "_postman_id": "catalog-service-001",
         "name": "Catalog Service API",
-        "description": "API collection for Catalog Service with JWT authentication, S3 image upload, and multi-tenant access control",
+        "description": "API collection for Catalog Service with JWT authentication, S3 image upload, and multi-tenant access control\n\n## Tenant Handling (IMPORTANT)\n\n### For MANAGERS:\n- tenantId is automatically extracted from JWT token\n- DO NOT include \"tenantId\" in request body when creating/updating products/toppings\n- Managers can only access resources from their own tenant\n\n### For ADMINS:\n- MUST provide \"tenantId\" in request body when creating products/toppings\n- Can access and manage resources from any tenant\n- Can change tenantId when updating resources\n\n### Usage:\n1. Login as Admin or Manager to get JWT token\n2. Token is stored automatically in environment variable\n3. Use appropriate request body based on your role",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         "_exporter_id": "12345"
     },
@@ -262,14 +262,14 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Pizza\",\n    \"priceCofigration\": {\n        \"size\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": [\"small\", \"medium\", \"large\"]\n        },\n        \"toppings\": {\n            \"priceType\": \"additional\",\n            \"availableOptions\": [\"cheese\", \"pepperoni\", \"mushrooms\"]\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Crust\",\n            \"wigetType\": \"radio\",\n            \"defaultValue\": \"thin\",\n            \"availableOptions\": [\"thin\", \"thick\", \"stuffed\"]\n        }\n    ]\n}"
+                            "raw": "{\n    \"name\": \"Pizza\",\n    \"priceCofigration\": {\n        \"size\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": [\"small\", \"medium\", \"large\"]\n        },\n        \"toppings\": {\n            \"priceType\": \"additional\",\n            \"availableOptions\": [\"cheese\", \"pepperoni\", \"mushrooms\"]\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Crust\",\n            \"wigetType\": \"radio\",\n            \"defaultValue\": \"thin\",\n            \"availableOptions\": [\"thin\", \"thick\", \"stuffed\"]\n        }\n    ]\n}\n\n// NOTE FOR ADMINS: Add this line at the end before closing brace\n// \"tenantId\": \"{{tenant_id}}\",\n\n// NOTE FOR MANAGERS: Do NOT include tenantId - it comes from your JWT token automatically"
                         },
                         "url": {
                             "raw": "{{catalog_service_url}}/categories",
                             "host": ["{{catalog_service_url}}"],
                             "path": ["categories"]
                         },
-                        "description": "Create a new category (Requires ADMIN or MANAGER authentication)"
+                        "description": "Create a new category (Requires ADMIN or MANAGER authentication)\n\nNote: \n- ADMIN: Can create categories for any tenant (must provide tenantId in body)\n- MANAGER: Can only create categories for their own tenant (tenantId automatically from token, remove from body if manager)\n\nFor MANAGER: Remove \"tenantId\" field from the request body\nFor ADMIN: Keep \"tenantId\" field and specify the target tenant"
                     },
                     "response": []
                 },
@@ -556,14 +556,14 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Margherita Pizza\",\n    \"description\": \"Classic pizza with tomato sauce, mozzarella, and basil\",\n    \"image\": \"{{product_image_url}}\",\n    \"category\": \"{{category_id}}\",\n    \"priceConfiguration\": {\n        \"small\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": {\n                \"small\": 10,\n                \"medium\": 15,\n                \"large\": 20\n            }\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Size\",\n            \"value\": \"medium\"\n        }\n    ],\n    \"tenantId\": \"{{tenant_id}}\",\n    \"isPublished\": true\n}"
+                            "raw": "{\n    \"name\": \"Margherita Pizza\",\n    \"description\": \"Classic pizza with tomato sauce, mozzarella, and basil\",\n    \"image\": \"{{product_image_url}}\",\n    \"category\": \"{{category_id}}\",\n    \"priceConfiguration\": {\n        \"small\": {\n            \"priceType\": \"base\",\n            \"availableOptions\": {\n                \"small\": 10,\n                \"medium\": 15,\n                \"large\": 20\n            }\n        }\n    },\n    \"attributes\": [\n        {\n            \"name\": \"Size\",\n            \"value\": \"medium\"\n        }\n    ],\n    \"isPublished\": true\n}\n\n// NOTE FOR ADMINS: Add this line above isPublished\n// \"tenantId\": \"{{tenant_id}}\",\n\n// NOTE FOR MANAGERS: Do NOT include tenantId - it comes from your JWT token automatically"
                         },
                         "url": {
                             "raw": "{{catalog_service_url}}/products",
                             "host": ["{{catalog_service_url}}"],
                             "path": ["products"]
                         },
-                        "description": "Create a new product with S3 image URL (Requires ADMIN or MANAGER authentication)\n\nNote: \n- Upload image first using 'Upload Product Image' endpoint\n- ADMIN: Can create products for any tenant\n- MANAGER: Can only create products for their own tenant"
+                        "description": "Create a new product with S3 image URL (Requires ADMIN or MANAGER authentication)\n\nNote: \n- Upload image first using 'Upload Product Image' endpoint\n- ADMIN: Can create products for any tenant (must provide tenantId in body)\n- MANAGER: Can only create products for their own tenant (tenantId automatically from token, remove from body if manager)\n\nFor MANAGER: Remove \"tenantId\" field from the request body\nFor ADMIN: Keep \"tenantId\" field and specify the target tenant"
                     },
                     "response": []
                 },
@@ -614,7 +614,7 @@
                             "host": ["{{catalog_service_url}}"],
                             "path": ["products", "{{product_id}}"]
                         },
-                        "description": "Update an existing product (Requires ADMIN or MANAGER authentication)\n\nNote:\n- ADMIN: Can update any product from any tenant\n- MANAGER: Can only update products from their own tenant\n- Image can be updated - old image will be deleted from S3 automatically"
+                        "description": "Update an existing product (Requires ADMIN or MANAGER authentication)\n\nNote:\n- ADMIN: Can update any product from any tenant (can change tenantId if needed)\n- MANAGER: Can only update products from their own tenant (cannot change tenantId)\n- Image can be updated - old image will be deleted from S3 automatically\n- For MANAGER: tenantId in request body is ignored (tenant cannot be changed)"
                     },
                     "response": []
                 },
@@ -663,6 +663,325 @@
                 }
             ],
             "description": "Product CRUD operations with S3 image upload and multi-tenant access control"
+        },
+        {
+            "name": "Toppings",
+            "item": [
+                {
+                    "name": "Get All Toppings",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains toppings array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('data');",
+                                    "    pm.expect(jsonData.data).to.be.an('array');",
+                                    "    ",
+                                    "    if (jsonData.data.length > 0) {",
+                                    "        pm.environment.set(\"topping_id\", jsonData.data[0]._id);",
+                                    "    }",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{catalog_service_url}}/toppings?page=1&limit=10",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["toppings"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "q",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "tenantId",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "isPublished",
+                                    "value": "true",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Fetch all toppings with pagination (No authentication required)\n\nQuery Parameters:\n- page: Page number (default: 1)\n- limit: Items per page (default: 10)\n- q: Search by name\n- tenantId: Filter by tenant\n- isPublished: Filter by published status"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Topping by ID",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains topping\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('topping');",
+                                    "    pm.expect(jsonData.topping).to.have.property('_id');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{catalog_service_url}}/toppings/{{topping_id}}",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["toppings", "{{topping_id}}"]
+                        },
+                        "description": "Fetch a specific topping by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Upload Topping Image",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Image uploaded successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains S3 URL and key\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('data');",
+                                    "    pm.expect(jsonData.data).to.have.property('url');",
+                                    "    pm.expect(jsonData.data).to.have.property('key');",
+                                    "    ",
+                                    "    if (jsonData.data.url) {",
+                                    "        pm.environment.set(\"topping_image_url\", jsonData.data.url);",
+                                    "        console.log(\"Image URL saved:\", jsonData.data.url);",
+                                    "    }",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{catalog_service_url}}/toppings/upload-image",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["toppings", "upload-image"]
+                        },
+                        "description": "Upload topping image to AWS S3 (Requires ADMIN or MANAGER authentication)\n\nReturns S3 URL and key for the uploaded image.\n\nSupported formats: JPEG, JPG, PNG, WEBP, GIF\nMax size: 5MB"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Topping",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Topping created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains topping data\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('message');",
+                                    "    pm.expect(jsonData).to.have.property('topping');",
+                                    "    ",
+                                    "    if (jsonData.topping && jsonData.topping._id) {",
+                                    "        pm.environment.set(\"topping_id\", jsonData.topping._id);",
+                                    "        console.log(\"Topping ID saved:\", jsonData.topping._id);",
+                                    "    }",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Topping has required fields\", function () {",
+                                    "    const topping = pm.response.json().topping;",
+                                    "    pm.expect(topping).to.have.property('_id');",
+                                    "    pm.expect(topping).to.have.property('name');",
+                                    "    pm.expect(topping).to.have.property('image');",
+                                    "    pm.expect(topping).to.have.property('price');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Extra Cheese\",\n    \"image\": \"{{topping_image_url}}\",\n    \"price\": 50,\n    \"isPublished\": true\n}\n\n// NOTE FOR ADMINS: Add this line above isPublished\n// \"tenantId\": \"{{tenant_id}}\",\n\n// NOTE FOR MANAGERS: Do NOT include tenantId - it comes from your JWT token automatically"
+                        },
+                        "url": {
+                            "raw": "{{catalog_service_url}}/toppings",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["toppings"]
+                        },
+                        "description": "Create a new topping with S3 image URL (Requires ADMIN or MANAGER authentication)\n\nNote: \n- Upload image first using 'Upload Topping Image' endpoint\n- ADMIN: Can create toppings for any tenant (must provide tenantId in body)\n- MANAGER: Can only create toppings for their own tenant (tenantId automatically from token, remove from body if manager)\n\nFor MANAGER: Remove \"tenantId\" field from the request body\nFor ADMIN: Keep \"tenantId\" field and specify the target tenant"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Topping",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Topping updated successfully\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains updated topping\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('topping');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Extra Cheese\",\n    \"price\": 60,\n    \"isPublished\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{catalog_service_url}}/toppings/{{topping_id}}",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["toppings", "{{topping_id}}"]
+                        },
+                        "description": "Update an existing topping (Requires ADMIN or MANAGER authentication)\n\nNote:\n- ADMIN: Can update any topping from any tenant (can change tenantId if needed)\n- MANAGER: Can only update toppings from their own tenant (cannot change tenantId)\n- Image can be updated - old image will be deleted from S3 automatically\n- For MANAGER: tenantId in request body is ignored (tenant cannot be changed)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Topping",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Topping deleted successfully\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response contains deleted topping\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('message');",
+                                    "    pm.expect(jsonData).to.have.property('topping');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{catalog_service_url}}/toppings/{{topping_id}}",
+                            "host": ["{{catalog_service_url}}"],
+                            "path": ["toppings", "{{topping_id}}"]
+                        },
+                        "description": "Delete a topping (Requires ADMIN or MANAGER authentication)\n\nNote:\n- ADMIN: Can delete any topping from any tenant\n- MANAGER: Can only delete toppings from their own tenant\n- Topping image will be automatically deleted from S3"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Topping CRUD operations with S3 image upload and multi-tenant access control"
         },
         {
             "name": "Health Check",

@@ -2,7 +2,7 @@ export interface AuthPayload {
     sub: number;
     role: string;
     id?: number;
-    tenant?: string;
+    tenant?: number; // Tenant ID from auth service is a number
 }
 
 declare global {

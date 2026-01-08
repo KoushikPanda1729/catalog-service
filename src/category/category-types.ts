@@ -16,4 +16,5 @@ export interface Category {
     name: string;
     priceCofigration: PriceConfiguration;
     attributes: Attribute[];
+    tenantId: string; // Tenant ID from auth service (PostgreSQL numeric ID)
 }

@@ -69,8 +69,7 @@ export default [
         .withMessage("Attribute value is required"),
 
     body("tenantId")
-        .exists()
-        .withMessage("Tenant ID is required")
+        .optional()
         .isString()
         .withMessage("Tenant ID must be a string")
         .trim()

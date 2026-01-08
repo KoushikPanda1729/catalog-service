@@ -17,7 +17,7 @@ export interface Product extends Document {
     category: Types.ObjectId;
     priceConfiguration: Map<string, PriceConfiguration>;
     attributes: Attribute[];
-    tenantId: string;
+    tenantId: string; // Tenant ID from auth service (PostgreSQL numeric ID)
     isPublished: boolean;
     createdAt: Date;
     updatedAt: Date;

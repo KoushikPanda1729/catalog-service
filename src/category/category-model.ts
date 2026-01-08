@@ -15,10 +15,14 @@ const attributeSchema = new mongoose.Schema<Attribute>({
 });
 
 const categorySchema = new mongoose.Schema<Category>({
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     priceCofigration: { type: Map, of: priceCofigrationSchema, required: true },
     attributes: { type: [attributeSchema], required: true },
+    tenantId: { type: String, required: true },
 });
+
+// Compound index: name must be unique per tenant
+categorySchema.index({ name: 1, tenantId: 1 }, { unique: true });
 
 categorySchema.plugin(aggregatePaginate);
 
