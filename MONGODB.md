@@ -8,6 +8,7 @@ Create volume ---> docker volume create catalog-service-mddata
 
 Run container --->
 docker run -d \
+ --rm \
  --name mongodb-catalog-service \
  -p 27017:27017 \
  -v catalog-service-mddata:/data/db \
