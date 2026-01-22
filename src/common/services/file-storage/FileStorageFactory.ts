@@ -1,5 +1,5 @@
-import { Config } from "../../config";
-import type { IFileStorage } from "./IFileStorage";
+import { Config } from "../../../config";
+import type { IFileStorage } from "../../types/IFileStorage";
 import { S3FileStorage } from "./S3FileStorage";
 
 export class FileStorageFactory {

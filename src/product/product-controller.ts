@@ -5,13 +5,15 @@ import type { Product } from "./product-types";
 import type { ProductService } from "./product-service";
 import type { Logger } from "winston";
 import type { UploadedFile } from "express-fileupload";
-import type { IFileStorage } from "../common/services/IFileStorage";
+import type { IFileStorage } from "../common/types/IFileStorage";
+import type { IMessageBroker } from "../common/types/broker";
 
 export class ProductController {
     constructor(
         private productService: ProductService,
         private logger: Logger,
-        private fileStorage: IFileStorage
+        private fileStorage: IFileStorage,
+        private broker: IMessageBroker
     ) {}
 
     async create(
@@ -80,6 +82,16 @@ export class ProductController {
                 tenantId,
                 isPublished,
             } as Product);
+
+            // Send message to broker
+            await this.broker.sendMessage({
+                topic: "product",
+                key: product._id.toString(),
+                value: JSON.stringify({
+                    event: "product-created",
+                    data: product,
+                }),
+            });
 
             this.logger.info(
                 "Product created successfully " + product._id.toString()
@@ -159,6 +171,16 @@ export class ProductController {
         if (!product) {
             return next(createHttpError(404, "Product not found"));
         }
+
+        // Send message to broker
+        await this.broker.sendMessage({
+            topic: "product",
+            key: product._id.toString(),
+            value: JSON.stringify({
+                event: "product-updated",
+                data: product,
+            }),
+        });
 
         this.logger.info(
             "Product updated successfully " + product._id.toString()
@@ -278,6 +300,16 @@ export class ProductController {
         if (!product) {
             return next(createHttpError(404, "Product not found"));
         }
+
+        // Send message to broker
+        await this.broker.sendMessage({
+            topic: "product",
+            key: product._id.toString(),
+            value: JSON.stringify({
+                event: "product-deleted",
+                data: product,
+            }),
+        });
 
         this.logger.info("Product deleted successfully: " + id);
         res.status(200).json({

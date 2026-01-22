@@ -2,11 +2,22 @@ import app from "./app";
 import { Config } from "./config/index";
 import logger from "./config/logger";
 import { initDB } from "./config/initdb";
+import { createMessageBroker } from "./common/services/broker/MessageBrokerFactory";
 
 const startServer = async () => {
     const { PORT } = Config;
     try {
         await initDB();
+
+        // Connect to message broker
+        try {
+            const broker = createMessageBroker();
+            await broker.connect();
+            logger.info("Message broker connected");
+        } catch (err) {
+            logger.error("Failed to connect to message broker:", err);
+        }
+
         app.listen(PORT, () =>
             logger.info(`Server is running on port ${PORT}`)
         );

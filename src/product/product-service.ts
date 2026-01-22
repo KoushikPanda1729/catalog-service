@@ -1,6 +1,6 @@
 import ProductModel from "./product-model";
 import type { Product } from "./product-types";
-import type { IFileStorage } from "../common/services/IFileStorage";
+import type { IFileStorage } from "../common/types/IFileStorage";
 import type { AggregatePaginateModel } from "mongoose";
 import mongoose from "mongoose";
 

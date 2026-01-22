@@ -1,7 +1,7 @@
 import ToppingModel from "./topping-model";
 import type { Topping } from "./topping-types";
 import type { AggregatePaginateModel } from "mongoose";
-import type { IFileStorage } from "../common/services/IFileStorage";
+import type { IFileStorage } from "../common/types/IFileStorage";
 
 export class ToppingService {
     constructor(private fileStorage?: IFileStorage) {}

@@ -10,4 +10,7 @@ export const Config = {
     AWS_S3_ACCESS_KEY_ID: config.get<string>("aws.s3.accessKeyId"),
     AWS_S3_SECRET_ACCESS_KEY: config.get<string>("aws.s3.secretAccessKey"),
     STORAGE_PROVIDER: config.get<string>("storage.provider"),
+    BROKER_TYPE: config.get<string>("broker.type"),
+    KAFKA_CLIENT_ID: config.get<string>("kafka.clientId"),
+    KAFKA_BROKERS: config.get<string[]>("kafka.brokers"),
 };

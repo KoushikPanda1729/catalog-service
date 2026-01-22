@@ -14,17 +14,20 @@ import { asyncHandler } from "../common/utils/asyncHandler";
 import { authenticate } from "../common/middleware/authenticate";
 import { authorize } from "../common/middleware/authorize";
 import { Roles } from "../common/constants/roles";
-import { FileStorageFactory } from "../common/services/FileStorageFactory";
+import { FileStorageFactory } from "../common/services/file-storage/FileStorageFactory";
+import { createMessageBroker } from "../common/services/broker/MessageBrokerFactory";
 
 const router = Router();
 
 const fileStorage = FileStorageFactory.create();
 const productService = new ProductService(fileStorage);
+const broker = createMessageBroker();
 
 const productController = new ProductController(
     productService,
     logger,
-    fileStorage
+    fileStorage,
+    broker
 );
 
 router.get(

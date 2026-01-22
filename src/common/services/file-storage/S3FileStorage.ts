@@ -3,9 +3,9 @@ import {
     PutObjectCommand,
     DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
-import { Config } from "../../config";
-import type { IFileStorage, UploadResult } from "./IFileStorage";
 import { randomUUID } from "crypto";
+import type { IFileStorage, UploadResult } from "../../types/IFileStorage";
+import { Config } from "../../../config";
 
 export class S3FileStorage implements IFileStorage {
     private s3Client: S3Client;

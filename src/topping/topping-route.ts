@@ -14,7 +14,7 @@ import { asyncHandler } from "../common/utils/asyncHandler";
 import { authenticate } from "../common/middleware/authenticate";
 import { authorize } from "../common/middleware/authorize";
 import { Roles } from "../common/constants/roles";
-import { FileStorageFactory } from "../common/services/FileStorageFactory";
+import { FileStorageFactory } from "../common/services/file-storage/FileStorageFactory";
 
 const router = Router();
 

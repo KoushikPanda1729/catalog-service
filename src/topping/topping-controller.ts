@@ -5,7 +5,7 @@ import type { Topping } from "./topping-types";
 import type { ToppingService } from "./topping-service";
 import type { Logger } from "winston";
 import type { UploadedFile } from "express-fileupload";
-import type { IFileStorage } from "../common/services/IFileStorage";
+import type { IFileStorage } from "../common/types/IFileStorage";
 
 export class ToppingController {
     constructor(
