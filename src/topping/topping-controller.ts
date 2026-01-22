@@ -6,12 +6,14 @@ import type { ToppingService } from "./topping-service";
 import type { Logger } from "winston";
 import type { UploadedFile } from "express-fileupload";
 import type { IFileStorage } from "../common/types/IFileStorage";
+import type { IMessageBroker } from "../common/types/broker";
 
 export class ToppingController {
     constructor(
         private toppingService: ToppingService,
         private logger: Logger,
-        private fileStorage: IFileStorage
+        private fileStorage: IFileStorage,
+        private broker: IMessageBroker
     ) {}
 
     async create(
@@ -69,6 +71,16 @@ export class ToppingController {
                 tenantId,
                 isPublished,
             } as Topping);
+
+            // Send message to broker
+            await this.broker.sendMessage({
+                topic: "topping",
+                key: topping._id?.toString(),
+                value: JSON.stringify({
+                    event: "topping-created",
+                    data: topping,
+                }),
+            });
 
             this.logger.info(
                 "Topping created successfully " + topping._id?.toString()
@@ -148,6 +160,16 @@ export class ToppingController {
         if (!topping) {
             return next(createHttpError(404, "Topping not found"));
         }
+
+        // Send message to broker
+        await this.broker.sendMessage({
+            topic: "topping",
+            key: topping._id?.toString(),
+            value: JSON.stringify({
+                event: "topping-updated",
+                data: topping,
+            }),
+        });
 
         this.logger.info(
             "Topping updated successfully " + topping._id?.toString()
@@ -265,6 +287,16 @@ export class ToppingController {
         if (!topping) {
             return next(createHttpError(404, "Topping not found"));
         }
+
+        // Send message to broker
+        await this.broker.sendMessage({
+            topic: "topping",
+            key: topping._id?.toString(),
+            value: JSON.stringify({
+                event: "topping-deleted",
+                data: topping,
+            }),
+        });
 
         this.logger.info("Topping deleted successfully: " + id);
         res.status(200).json({

@@ -15,16 +15,19 @@ import { authenticate } from "../common/middleware/authenticate";
 import { authorize } from "../common/middleware/authorize";
 import { Roles } from "../common/constants/roles";
 import { FileStorageFactory } from "../common/services/file-storage/FileStorageFactory";
+import { createMessageBroker } from "../common/services/broker/MessageBrokerFactory";
 
 const router = Router();
 
 const fileStorage = FileStorageFactory.create();
 const toppingService = new ToppingService(fileStorage);
+const broker = createMessageBroker();
 
 const toppingController = new ToppingController(
     toppingService,
     logger,
-    fileStorage
+    fileStorage,
+    broker
 );
 
 router.get(
