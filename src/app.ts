@@ -4,7 +4,7 @@ import express, {
     type Response,
 } from "express";
 import cors from "cors";
-import config from "config";
+import { Config } from "./config";
 import logger from "./config/logger";
 import type { HttpError } from "http-errors";
 import categoryRouter from "./category/category-route";
@@ -15,12 +15,7 @@ import fileUpload from "express-fileupload";
 
 const app = express();
 
-app.use(
-    cors({
-        origin: true,
-        credentials: true,
-    })
-);
+app.use(cors(Config.CORS));
 app.use(express.json());
 app.use(cookieParser());
 app.use(
@@ -43,7 +38,7 @@ app.use(
 );
 
 app.get("/", (_req: Request, res: Response) => {
-    res.status(200).send(config.get("server.port"));
+    res.status(200).send(Config.PORT);
 });
 
 app.use("/categories", categoryRouter);
