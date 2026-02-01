@@ -1,4 +1,9 @@
-import { Kafka, type Producer } from "kafkajs";
+import {
+    Kafka,
+    type KafkaConfig,
+    type SASLOptions,
+    type Producer,
+} from "kafkajs";
 import type {
     IMessageBroker,
     Message,
@@ -10,10 +15,26 @@ export class KafkaBroker implements IMessageBroker {
     private producer: Producer;
 
     constructor(config: MessageBrokerConfig) {
-        this.kafka = new Kafka({
+        let kafkaConfig: KafkaConfig = {
             clientId: config.clientId,
             brokers: config.brokers,
-        });
+        };
+
+        if (config.sasl) {
+            kafkaConfig = {
+                ...kafkaConfig,
+                ssl: {
+                    rejectUnauthorized: true,
+                },
+                sasl: {
+                    mechanism: config.sasl.mechanism,
+                    username: config.sasl.username,
+                    password: config.sasl.password,
+                } as SASLOptions,
+            };
+        }
+
+        this.kafka = new Kafka(kafkaConfig);
         this.producer = this.kafka.producer();
     }
 
