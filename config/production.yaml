@@ -1,0 +1,35 @@
+server:
+    port: 5502
+    host: "0.0.0.0"
+
+database:
+    url: ""
+
+auth:
+    jwksUri: ""
+
+aws:
+    s3:
+        region: ""
+        bucket: ""
+        accessKeyId: ""
+        secretAccessKey: ""
+
+storage:
+    provider: "s3"
+
+broker:
+    type: "kafka"
+
+kafka:
+    clientId: "catalog-service"
+    brokers: []
+    ssl: true
+    sasl:
+        mechanism: "plain"
+        username: ""
+        password: ""
+
+cors:
+    origin: []
+    credentials: true

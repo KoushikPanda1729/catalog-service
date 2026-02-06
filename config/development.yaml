@@ -1,0 +1,33 @@
+server:
+    port: 5502
+    host: "localhost"
+
+database:
+    url: "mongodb://root:root@localhost:27017/catalog-service?authSource=admin"
+
+auth:
+    jwksUri: "http://localhost:5501/.well-known/jwks.json"
+
+aws:
+    s3:
+        region: "eu-north-1"
+        bucket: "catalog-service-product"
+        accessKeyId: ""
+        secretAccessKey: ""
+
+storage:
+    provider: "s3"
+
+broker:
+    type: "kafka"
+
+kafka:
+    clientId: "catalog-service"
+    brokers:
+        - "localhost:9092"
+
+cors:
+    origin:
+        - "http://localhost:3000"
+        - "http://localhost:3001"
+    credentials: true
